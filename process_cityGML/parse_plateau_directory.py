@@ -4,12 +4,13 @@ from shapely.geometry import Polygon
 from shapely.wkt import dumps as wkt_dumps
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, SafeBuilding, BuildingRiskAttribute  # <-- ADD THIS IMPORT
+from process_cityGML.models import Base, SafeBuilding, BuildingRiskAttribute
 from dotenv import load_dotenv
 import logging
+import argparse
 
-SCRIPT_DIR = os.path.dirname(__file__)
-DATA_DIR = os.path.join(SCRIPT_DIR, "plateau_data")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "plateau_data"))
 
 # --- Logging Setup ---
 logging.basicConfig(
@@ -57,7 +58,7 @@ def extract_risk_attributes(bldg_elem, ns):
                 "duration_unit": child.find("uro:duration", ns).attrib.get("uom") if child.find("uro:duration", ns) is not None else None,
             }
             risk_attributes.append(entry)
-    logging.info(risk_attributes)
+    # logging.info(risk_attributes)
     return risk_attributes
 
 def to_int(text):
@@ -124,32 +125,9 @@ def process_gml_file(filepath):
         polygon = extract_footprint_polygon(solid)
 
         if polygon is None or not polygon.is_valid or polygon.is_empty:
-            logging.error(f"Skipped building {gml_id}: invalid or missing geometry")
+            # logging.error(f"Skipped building {gml_id}: invalid or missing geometry")
             continue
 
-        # building = SafeBuilding(
-        #     gml_id=gml_id,
-        #     name=name,
-        #     usage_code=int(usage_code),
-        #     height=height,
-        #     geom=f"SRID=6668;{wkt_dumps(polygon)}"
-        # )
-        # session.add(building)
-        # session.flush()  # get building.id before commit
-
-        # for risk in extract_risk_attributes(bldg, ns):
-        #     session.add(BuildingRiskAttribute(
-        #         building_id=building.id,
-        #         hazard_type=risk["hazard_type"],
-        #         description_code=risk["description_code"],
-        #         rank=risk["rank"],
-        #         depth=risk["depth"],
-        #         depth_unit=risk["depth_unit"],
-        #         admin_type=risk["admin_type"],
-        #         scale=risk["scale"],
-        #         duration=risk["duration"],
-        #         duration_unit=risk["duration_unit"]
-        #     ))
         risks = extract_risk_attributes(bldg, ns)
         risk_objects = [BuildingRiskAttribute(
             hazard_type=r["hazard_type"],
@@ -173,7 +151,7 @@ def process_gml_file(filepath):
         )
         session.add(building)
 
-        
+
 def walk_and_process_all():
     session.query(BuildingRiskAttribute).delete()
     session.query(SafeBuilding).delete()
@@ -187,5 +165,18 @@ def walk_and_process_all():
     session.commit()
     logging.info("✅ 全ファイルの処理と登録が完了しました。")
 
+def reset_tables():
+    from sqlalchemy import text
+    session.execute(text("TRUNCATE TABLE building_risk_attributes, safe_buildings RESTART IDENTITY CASCADE"))
+    session.commit()
+    logging.info("✅ All tables truncated and IDs reset.")
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process CityGML and insert safe buildings.")
+    parser.add_argument("--reset", action="store_true", help="Truncate tables and reset IDs before processing")
+    args = parser.parse_args()
+
+    if args.reset:
+        reset_tables()
+
     walk_and_process_all()

@@ -1,6 +1,6 @@
 from fastapi import WebSocket, WebSocketDisconnect
 from app.db import SessionLocal
-from app.crud.building_query import get_safe_buildings_nearby, log_all_safe_buildings
+from app.crud.building_query import get_safe_buildings_nearby_clustered
 import logging
 
 # async def building_ws_handler(websocket: WebSocket):
@@ -28,22 +28,20 @@ import logging
 
 async def building_ws_handler(websocket: WebSocket):
     await websocket.accept()
-    db = SessionLocal()
+    session = SessionLocal()
     try:
         while True:
+            data = await websocket.receive_json()
             try:
-                data = await websocket.receive_json()
-                lat = data["latitude"]
-                lng = data["longitude"]
-                radius = data.get("radius_km", 5)
-                buildings = get_safe_buildings_nearby(db, lat, lng, radius)
+                # 例: 建物検索
+                buildings = get_safe_buildings_nearby_clustered(session, data["latitude"], data["longitude"], data.get("radius_km", 5))
                 await websocket.send_json({"buildings": buildings})
             except Exception as e:
-                import traceback
-                traceback.print_exc()
+                session.rollback()  # 例外が起きたらロールバック
                 await websocket.send_json({"error": str(e)})
     except WebSocketDisconnect:
         print("WebSocket disconnected")
     finally:
-        db.close()
+        session.close()
+
 

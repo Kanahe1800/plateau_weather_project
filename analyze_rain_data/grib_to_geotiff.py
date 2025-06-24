@@ -4,7 +4,8 @@ import rasterio
 from rasterio.transform import from_origin
 
 # Load GRIB2 file
-grbs = pygrib.open("Z__C_RJTD_20200930073500_RDR_JMAGPV_Ggis1km_Prr05lv_ANAL_grib2.bin")
+file_name = "2025-06-24-11-30"
+grbs = pygrib.open(f'{file_name}.bin')
 grb = grbs.message(1)
 data, lats, lons = grb.data()
 data = data.filled(np.nan)  # convert MaskedArray to ndarray, filling masked values with NaN
@@ -38,7 +39,7 @@ lon_res = abs(lons[0, 1] - lons[0, 0])
 transform = from_origin(lons[0, 0], lats[0, 0], lon_res, lat_res)
 
 # Save as GeoTIFF
-with rasterio.open("radar_precip_mm_per_hr.tif", "w", driver="GTiff",
+with rasterio.open(f'{file_name}.tif', "w", driver="GTiff",
                    height=mm_per_hr.shape[0], width=mm_per_hr.shape[1],
                    count=1, dtype=mm_per_hr.dtype,
                    crs="EPSG:4326", transform=transform,

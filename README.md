@@ -42,7 +42,7 @@ To generate a flood risk map based on short-term rainfall intensity (e.g., 60-mi
 
 Below is an example of the output flood risk map displayed in QGIS:
 
-![Flood risk map example in QGIS](docs/images/risk_map.png)
+![Flood risk map example in QGIS](./docs/image/risk_map.png)
 
 - Transparent or black = No data
 - Brighter colors = Higher predicted flood risk (CNN output)

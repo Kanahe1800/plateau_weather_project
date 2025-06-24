@@ -14,15 +14,17 @@ services:
       - ./safe_map_db_dump.sql:/docker-entrypoint-initdb.d/safe_map_db_dump.sql
 
   backend:
-    build: ./backend
-    working_dir: /app
+    build:
+      context: .
+      dockerfile: Dockerfile  # Root-level Dockerfile
+    working_dir: /app/backend
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
     depends_on:
       - db
     volumes:
-      - ./backend:/app
+      - ./backend:/app/backend
     env_file:
       - .env
 

@@ -1,4 +1,4 @@
-# Use slim Python image
+# Dockerfile (in root folder)
 FROM python:3.11-slim
 
 # Set working directory
@@ -11,17 +11,9 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy only requirements first for better caching
+# Copy and install dependencies
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy rest of the app
+# Copy the full project (including subfolder with app code)
 COPY . .
-
-# Expose FastAPI port
-EXPOSE 8000
-
-# Run app with auto-reload (for development)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

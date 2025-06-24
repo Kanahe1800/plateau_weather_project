@@ -6,3 +6,6 @@ __pycache__
 *.sql
 *.bin
 *.tif
+*.npy
+!flood_risk_cnn_nodata_lt0.1.tif
+create_no_data_geotiff.py

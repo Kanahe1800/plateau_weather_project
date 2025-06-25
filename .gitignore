@@ -9,3 +9,5 @@ __pycache__
 *.npy
 !flood_risk_cnn_nodata_lt0.1.tif
 create_no_data_geotiff.py
+*.xml
+A33-23_00_GML/*

@@ -4,7 +4,7 @@ import rasterio
 from rasterio.transform import from_origin
 
 # Load GRIB2 file
-file_name = "2025-06-24-11-30"
+file_name = "2025-06-26-14-05"
 grbs = pygrib.open(f'{file_name}.bin')
 grb = grbs.message(1)
 data, lats, lons = grb.data()

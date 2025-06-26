@@ -61,6 +61,7 @@ def compute_cumulative(rainfall_stack, steps):
 
 def build_input_tensor(rainfall_stack, risk_attr_path=None):
     # Compute trend
+
     trend = compute_trend(rainfall_stack)
     print("finish analyzing trend")
     # Compute cumulative rainfall maps
@@ -72,9 +73,15 @@ def build_input_tensor(rainfall_stack, risk_attr_path=None):
 
     # Optional: add risk attribution layer
     if risk_attr_path:
-        with rasterio.open(risk_attr_path) as src:
-            risk_attr = src.read(1)
-        channels.append(risk_attr)  # channel 13
+        try:
+            with rasterio.open(risk_attr_path) as src:
+                risk_attr = src.read(1)
+                print("Risk shape:", risk_attr.shape)
+                channels.append(risk_attr)  # channel 13
+        except Exception as e:
+            print(f"⚠️ Failed to load risk layer: {e}")
+            dummy_risk = np.zeros_like(rainfall_stack[0])
+            channels.append(dummy_risk)
     else:
         print("⚠️ No risk attribution provided. Using rainfall only.")
         dummy_risk = np.zeros_like(rainfall_stack[0])
@@ -93,7 +100,7 @@ def build_input_tensor(rainfall_stack, risk_attr_path=None):
 
 # Folder with the GeoTIFFs
 tiff_folder = "./rainfall_data"  # change to your path
-start_time = "2025-06-24-10-35"
+start_time = "2025-06-26-13-10"
 
 # Load 12 rainfall files
 rainfall_stack, times, profile = load_rainfall_stack(start_time, folder=tiff_folder)
@@ -102,5 +109,5 @@ rainfall_stack, times, profile = load_rainfall_stack(start_time, folder=tiff_fol
 input_tensor = build_input_tensor(rainfall_stack)
 
 # Save as NumPy array (optional)
-np.save("input_tensor_2025-06-24-11-30.npy", input_tensor)
+np.save("input_tensor_2025-06-26-14-10.npy", input_tensor)
 print("✅ 16-channel input tensor shape:", input_tensor.shape)
